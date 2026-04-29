@@ -40,14 +40,14 @@ jobs:
         $QT_DIR = "D:\Qt"
         python -m aqt install-qt windows desktop ${{env.QT_VERSION_WINDOWS}} win64_msvc2022_64 `
           --outputdir $QT_DIR `
-          --modules qtcharts qtserialport qtserialbus qtwebsockets qtgraphs
+          --modules qtcharts qtserialport qtserialbus qtwebsockets qtgraphs qtquick3d qtwebengine
 
         if ($LASTEXITCODE -ne 0) {
           Write-Host "Tsinghua failed, trying dotsrc..."
           Set-Content -Path "$configDir\settings.ini" -Value "[aqt]`nbaseurl: https://mirrors.dotsrc.org/qtproject"
           python -m aqt install-qt windows desktop ${{env.QT_VERSION_WINDOWS}} win64_msvc2022_64 `
             --outputdir $QT_DIR `
-            --modules qtcharts qtserialport qtserialbus qtwebsockets qtgraphs
+            --modules qtcharts qtserialport qtserialbus qtwebsockets qtgraphs qtquick3d qtwebengine
         }
 
         if ($LASTEXITCODE -ne 0) { exit 1 }
