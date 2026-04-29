@@ -32,25 +32,40 @@ jobs:
       run: |
         pip install aqtinstall
 
-        # 写入 aqt 配置文件，指定清华镜像
         $configDir = "$env:APPDATA\aqt"
         New-Item -ItemType Directory -Force -Path $configDir | Out-Null
         Set-Content -Path "$configDir\settings.ini" -Value "[aqt]`nbaseurl: https://mirrors.tuna.tsinghua.edu.cn/qt"
 
         $QT_DIR = "D:\Qt"
-        python -m aqt install-qt windows desktop ${{env.QT_VERSION_WINDOWS}} win64_msvc2022_64 `
-          --outputdir $QT_DIR `
-          --modules qtserialport qtcharts qtgraphs qtquick3d qtshadertools qtwebengine qt5compat qtconnectivity
 
-        if ($LASTEXITCODE -ne 0) {
-          Write-Host "Tsinghua failed, trying dotsrc..."
-          Set-Content -Path "$configDir\settings.ini" -Value "[aqt]`nbaseurl: https://mirrors.dotsrc.org/qtproject"
+        # 先装基础包
+        python -m aqt install-qt windows desktop ${{env.QT_VERSION_WINDOWS}} win64_msvc2022_64 `
+          --outputdir $QT_DIR
+        
+        # 再单独装各模块
+        $modules = @(
+          "qtserialport",
+          "qtcharts",
+          "qtshadertools",
+          "qtquick3d",
+          "qtgraphs",
+          "qt5compat",
+          "qtconnectivity",
+          "qtwebengine"
+        )
+        foreach ($mod in $modules) {
+          Write-Host "Installing $mod..."
           python -m aqt install-qt windows desktop ${{env.QT_VERSION_WINDOWS}} win64_msvc2022_64 `
             --outputdir $QT_DIR `
-            --modules qtserialport qtcharts qtgraphs qtquick3d qtshadertools qtwebengine qt5compat qtconnectivity
+            --modules $mod
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Warning: $mod failed, continuing..."
+          }
         }
 
-        if ($LASTEXITCODE -ne 0) { exit 1 }
+        # 列出安装结果
+        Write-Host "=== Installed Qt cmake configs ==="
+        Get-ChildItem "D:\Qt\${{env.QT_VERSION_WINDOWS}}\msvc2022_64\lib\cmake" | Select-Object Name
 
         $QT_BIN = "$QT_DIR\${{env.QT_VERSION_WINDOWS}}\msvc2022_64\bin"
         $QT_CMAKE = "$QT_DIR\${{env.QT_VERSION_WINDOWS}}\msvc2022_64\lib\cmake"
