@@ -11,7 +11,7 @@ on:
 
 env:
   VERSION: "3.2.7-Community"
-  QT_VERSION_WINDOWS: 6.7.2
+  QT_VERSION_WINDOWS: 6.9.3
   EXECUTABLE: "Serial-Studio"
   APPLICATION: "Serial Studio"
 
@@ -31,27 +31,27 @@ jobs:
       shell: pwsh
       run: |
         pip install aqtinstall
+
+        # 写入 aqt 配置文件，指定清华镜像
+        $configDir = "$env:APPDATA\aqt"
+        New-Item -ItemType Directory -Force -Path $configDir | Out-Null
+        Set-Content -Path "$configDir\settings.ini" -Value "[aqt]`nbaseurl: https://mirrors.tuna.tsinghua.edu.cn/qt"
+
         $QT_DIR = "D:\Qt"
-        $mirrors = @(
-          "https://mirrors.tuna.tsinghua.edu.cn/qt",
-          "https://mirrors.ocf.berkeley.edu/qt",
-          "https://ftp.fau.de/qtproject",
-          "https://mirrors.dotsrc.org/qtproject"
-        )
-        $success = $false
-        foreach ($mirror in $mirrors) {
-          Write-Host "Trying mirror: $mirror"
+        python -m aqt install-qt windows desktop ${{env.QT_VERSION_WINDOWS}} win64_msvc2022_64 `
+          --outputdir $QT_DIR `
+          --modules qtcharts qtserialport qtserialbus qtwebsockets
+
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "Tsinghua failed, trying dotsrc..."
+          Set-Content -Path "$configDir\settings.ini" -Value "[aqt]`nbaseurl: https://mirrors.dotsrc.org/qtproject"
           python -m aqt install-qt windows desktop ${{env.QT_VERSION_WINDOWS}} win64_msvc2022_64 `
             --outputdir $QT_DIR `
-            --base $mirror `
             --modules qtcharts qtserialport qtserialbus qtwebsockets
-          if ($LASTEXITCODE -eq 0) {
-            $success = $true
-            break
-          }
-          Write-Host "Mirror failed, trying next..."
         }
-        if (-not $success) { exit 1 }
+
+        if ($LASTEXITCODE -ne 0) { exit 1 }
+
         $QT_BIN = "$QT_DIR\${{env.QT_VERSION_WINDOWS}}\msvc2022_64\bin"
         $QT_CMAKE = "$QT_DIR\${{env.QT_VERSION_WINDOWS}}\msvc2022_64\lib\cmake"
         echo "$QT_BIN" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
