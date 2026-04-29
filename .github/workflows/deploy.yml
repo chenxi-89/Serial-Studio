@@ -7,36 +7,21 @@ on:
   pull_request:
     paths-ignore:
     - '**.md'
-
-  workflow_dispatch:  
+  workflow_dispatch:
 
 env:
   VERSION: "3.2.7-Community"
-  QT_VERSION_LINUX: 6.7.0
-  QT_VERSION_MACOS: 6.7.0
-  QT_VERSION_WINDOWS: 6.7.0
+  QT_VERSION_WINDOWS: 6.7.2
   EXECUTABLE: "Serial-Studio"
   APPLICATION: "Serial Studio"
-  UNIXNAME: "serial-studio"
-  QML_DIR: "../../app/qml"
-  PUBLISHER: "Community"
-  # 开启云端自动安装 Qt 环境，解决本地硬盘不足问题
-  INSTALL_QT_MACOS: true
-  INSTALL_QT_WINDOWS: true
-  INSTALL_QT_LINUX_INTEL: true
-  INSTALL_QT_LINUX_ARM64: false
-  QTFRAMEWORK_BYPASS_LICENSE_CHECK: "true"
-  DESCRIPTION: "Multi-purpose serial data visualization & processing program"
 
 jobs:
-# -------------------------------------------------------------------------------
-# Windows 构建部分 (已修改为 GPL 模式)
-# -------------------------------------------------------------------------------
   build-windows:
     runs-on: windows-latest
     name: '🧊 Windows Build'
     steps:
     - run: git config --global core.autocrlf input
+
     - name: '🧰 Checkout'
       uses: actions/checkout@v4
       with:
@@ -49,11 +34,13 @@ jobs:
         host: windows
         target: desktop
         arch: win64_msvc2022_64
-        modules: 'qtcharts qtserialport qtserialbus'
+        modules: 'qtcharts qtserialport qtserialbus qtwebsockets'
         cache: true
 
     - name: '⚙️ Install CMake'
       uses: lukka/get-cmake@latest
+      with:
+        useLocalCache: true
 
     - name: '🛠 Setup MSVC'
       uses: TheMrMilchmann/setup-msvc-dev@v4
@@ -70,11 +57,14 @@ jobs:
     - name: '🚧 Configure with CMake (GPL Mode)'
       run: |
         cmake -B build `
-          -DCMAKE_PREFIX_PATH="${{github.workspace}}/grpc-prefix" `
+          -DCMAKE_CXX_COMPILER=cl `
+          -DCMAKE_C_COMPILER=cl `
+          -DCMAKE_PREFIX_PATH="${{github.workspace}}/grpc-prefix;${{env.Qt6_DIR}}" `
           -DPRODUCTION_OPTIMIZATION=ON `
           -DENABLE_HARDENING=ON `
           -DENABLE_GRPC=ON `
           -DCMAKE_BUILD_TYPE=Release `
+          -DCMAKE_CONFIGURATION_TYPES=Release `
           -DBUILD_COMMERCIAL=OFF `
           -DBUILD_GPL3=ON
 
@@ -93,7 +83,3 @@ jobs:
       with:
         name: Serial-Studio-Free-Version
         path: Serial-Studio-Windows-Portable.zip
-
-# 注意：为了节省篇幅，此处省略了 Linux 和 macOS 部分。
-# 如果你也需要这些平台的免费版，请确保在对应的 cmake 配置步骤中
-# 同样设置 -DBUILD_COMMERCIAL=OFF -DBUILD_GPL3=ON
