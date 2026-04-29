@@ -36,6 +36,7 @@ jobs:
         arch: win64_msvc2022_64
         modules: 'qtcharts qtserialport qtserialbus qtwebsockets'
         cache: true
+        mirror: 'https://mirrors.ocf.berkeley.edu/qt'
 
     - name: '⚙️ Install CMake'
       uses: lukka/get-cmake@latest
