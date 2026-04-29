@@ -43,25 +43,14 @@ jobs:
         submodules: 'recursive'
 
     - name: '⚙️ Install Qt'
-      shell: pwsh
-      env:
-        QT_VERSION: ${{env.QT_VERSION_WINDOWS}}
-        QT_ARCH: x64
-        QT_OUTPUT_DIR: ${{github.workspace}}/Qt-${{env.QT_VERSION_WINDOWS}}-${{runner.os}}-x64
-      run: |
-        ./scripts/install-qt.ps1
-
-    - name: '⚙️ Add Qt to PATH'
-      shell: pwsh
-      env:
-        QT_VERSION: ${{env.QT_VERSION_WINDOWS}}
-        QT_OUTPUT_DIR: ${{github.workspace}}/Qt-${{env.QT_VERSION_WINDOWS}}-${{runner.os}}-x64
-      run: |
-        $QT_BIN_PATH = "$env:QT_OUTPUT_DIR\$env:QT_VERSION\msvc2022_64\bin"
-        $QT_LIBEXEC_PATH = "$env:QT_OUTPUT_DIR\$env:QT_VERSION\msvc2022_64\libexec"
-        $CMAKE_PREFIX_PATH = "$env:QT_OUTPUT_DIR\$env:QT_VERSION\msvc2022_64\lib\cmake"
-        Write-Output "$QT_BIN_PATH" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-        Write-Output "CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH" >> $env:GITHUB_ENV
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{env.QT_VERSION_WINDOWS}}
+        host: windows
+        target: desktop
+        arch: win64_msvc2022_64
+        modules: 'qtcharts qtserialport qtserialbus'
+        cache: true
 
     - name: '⚙️ Install CMake'
       uses: lukka/get-cmake@latest
