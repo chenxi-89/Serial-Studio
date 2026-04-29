@@ -38,11 +38,9 @@ jobs:
 
         $QT_DIR = "D:\Qt"
 
-        # 先装基础包
         python -m aqt install-qt windows desktop ${{env.QT_VERSION_WINDOWS}} win64_msvc2022_64 `
           --outputdir $QT_DIR
-        
-        # 再单独装各模块
+
         $modules = @(
           "qtserialport",
           "qtcharts",
@@ -51,7 +49,8 @@ jobs:
           "qtgraphs",
           "qt5compat",
           "qtconnectivity",
-          "qtwebengine"
+          "qtwebengine",
+          "qtwebchannel"
         )
         foreach ($mod in $modules) {
           Write-Host "Installing $mod..."
@@ -62,10 +61,6 @@ jobs:
             Write-Host "Warning: $mod failed, continuing..."
           }
         }
-
-        # 列出安装结果
-        Write-Host "=== Installed Qt cmake configs ==="
-        Get-ChildItem "D:\Qt\${{env.QT_VERSION_WINDOWS}}\msvc2022_64\lib\cmake" | Select-Object Name
 
         $QT_BIN = "$QT_DIR\${{env.QT_VERSION_WINDOWS}}\msvc2022_64\bin"
         $QT_CMAKE = "$QT_DIR\${{env.QT_VERSION_WINDOWS}}\msvc2022_64\lib\cmake"
