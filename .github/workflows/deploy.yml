@@ -38,7 +38,7 @@ jobs:
     steps:
     - run: git config --global core.autocrlf input
     - name: '🧰 Checkout'
-      uses: actions/checkout@v5
+      uses: actions/checkout@v4
       with:
         submodules: 'recursive'
 
@@ -100,7 +100,7 @@ jobs:
         mv *.zip ../Serial-Studio-Windows-Portable.zip
 
     - name: '📤 Upload Result'
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v4
       with:
         name: Serial-Studio-Free-Version
         path: Serial-Studio-Windows-Portable.zip
