@@ -50,7 +50,8 @@ jobs:
           "qt5compat",
           "qtconnectivity",
           "qtwebengine",
-          "qtwebchannel"
+          "qtwebchannel",
+          "qtpositioning"
         )
         foreach ($mod in $modules) {
           Write-Host "Installing $mod..."
