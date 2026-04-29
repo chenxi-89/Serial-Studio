@@ -8,6 +8,8 @@ on:
     paths-ignore:
     - '**.md'
 
+  workflow_dispatch:  
+
 env:
   VERSION: "3.2.7-Community"
   QT_VERSION_LINUX: 6.7.0
