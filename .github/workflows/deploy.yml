@@ -27,16 +27,35 @@ jobs:
       with:
         submodules: 'recursive'
 
-    - name: '⚙️ Install Qt'
-      uses: jurplel/install-qt-action@v4
-      with:
-        version: ${{env.QT_VERSION_WINDOWS}}
-        host: windows
-        target: desktop
-        arch: win64_msvc2022_64
-        modules: 'qtcharts qtserialport qtserialbus qtwebsockets'
-        cache: true
-        mirror: 'https://mirrors.ocf.berkeley.edu/qt'
+    - name: '⚙️ Install Qt via aqt'
+      shell: pwsh
+      run: |
+        pip install aqtinstall
+        $QT_DIR = "D:\Qt"
+        $mirrors = @(
+          "https://mirrors.tuna.tsinghua.edu.cn/qt",
+          "https://mirrors.ocf.berkeley.edu/qt",
+          "https://ftp.fau.de/qtproject",
+          "https://mirrors.dotsrc.org/qtproject"
+        )
+        $success = $false
+        foreach ($mirror in $mirrors) {
+          Write-Host "Trying mirror: $mirror"
+          python -m aqt install-qt windows desktop ${{env.QT_VERSION_WINDOWS}} win64_msvc2022_64 `
+            --outputdir $QT_DIR `
+            --base $mirror `
+            --modules qtcharts qtserialport qtserialbus qtwebsockets
+          if ($LASTEXITCODE -eq 0) {
+            $success = $true
+            break
+          }
+          Write-Host "Mirror failed, trying next..."
+        }
+        if (-not $success) { exit 1 }
+        $QT_BIN = "$QT_DIR\${{env.QT_VERSION_WINDOWS}}\msvc2022_64\bin"
+        $QT_CMAKE = "$QT_DIR\${{env.QT_VERSION_WINDOWS}}\msvc2022_64\lib\cmake"
+        echo "$QT_BIN" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        echo "CMAKE_PREFIX_PATH=$QT_CMAKE" >> $env:GITHUB_ENV
 
     - name: '⚙️ Install CMake'
       uses: lukka/get-cmake@latest
@@ -60,7 +79,7 @@ jobs:
         cmake -B build `
           -DCMAKE_CXX_COMPILER=cl `
           -DCMAKE_C_COMPILER=cl `
-          -DCMAKE_PREFIX_PATH="${{github.workspace}}/grpc-prefix;${{env.Qt6_DIR}}" `
+          -DCMAKE_PREFIX_PATH="${{github.workspace}}/grpc-prefix;${{env.CMAKE_PREFIX_PATH}}" `
           -DPRODUCTION_OPTIMIZATION=ON `
           -DENABLE_HARDENING=ON `
           -DENABLE_GRPC=ON `
